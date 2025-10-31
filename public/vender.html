@@ -5,90 +5,57 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Registrar Venta</title>
     <style>
-        /* --- ESTILOS DEL MENÚ (AÑADIDO) --- */
+        /* --- ESTILOS DEL MENÚ --- */
         body {
             font-family: Arial, sans-serif;
             background: #f0f2f5;
             display: grid;
             place-items: center;
             min-height: 90vh;
-            margin: 0; /* Añadido */
-            padding-top: 80px; /* Añadido (deja espacio para el menú) */
-        }
-
-        .main-nav {
-            width: 100%;
-            background-color: #333;
-            padding: 15px 0;
-            position: fixed;
-            top: 0;
-            left: 0;
-            z-index: 100;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-        }
-        .main-nav ul {
-            display: flex;
-            justify-content: center;
-            list-style: none;
             margin: 0;
-            padding: 0;
+            padding-top: 80px;
         }
-        .main-nav li {
-            margin: 0 10px;
-        }
-        .main-nav a {
-            color: white;
-            text-decoration: none;
-            font-weight: bold;
-            font-size: 0.9em;
-            padding: 8px 12px;
-            border-radius: 4px;
-            transition: background-color 0.3s;
-        }
-        .main-nav a:hover {
-            background-color: #555;
-        }
-        .main-nav a.active {
-            background-color: #007bff;
-        }
+        .main-nav { width: 100%; background-color: #333; padding: 15px 0; position: fixed; top: 0; left: 0; z-index: 100; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
+        .main-nav ul { display: flex; justify-content: center; list-style: none; margin: 0; padding: 0; }
+        .main-nav li { margin: 0 10px; }
+        .main-nav a { color: white; text-decoration: none; font-weight: bold; font-size: 0.9em; padding: 8px 12px; border-radius: 4px; transition: background-color 0.3s; }
+        .main-nav a:hover { background-color: #555; }
+        .main-nav a.active { background-color: #007bff; }
 
-        /* --- (Resto de tus estilos originales) --- */
-        #form-container {
-            width: 400px;
-            padding: 30px;
-            background: #fff;
-            border-radius: 8px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-            margin-top: 20px; /* Añadido para espaciar del menú */
-        }
+        /* --- ESTILOS DEL FORMULARIO --- */
+        #form-container { width: 400px; padding: 30px; background: #fff; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); margin-top: 20px; }
         h2 { text-align: center; color: #333; }
         .form-group { margin-bottom: 15px; }
         .form-group label { display: block; margin-bottom: 5px; font-weight: bold; }
         .form-group input[type="text"], .form-group input[type="number"] { width: 100%; padding: 10px; font-size: 1em; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
-        button { width: 100%; padding: 12px; font-size: 1.1em; background-color: #28a745; color: white; border: none; border-radius: 4px; cursor: pointer; }
+        button[type="submit"] { width: 100%; padding: 12px; font-size: 1.1em; background-color: #28a745; color: white; border: none; border-radius: 4px; cursor: pointer; }
         #resultado { margin-top: 20px; text-align: center; font-size: 1.1em; }
         .exito { color: green; } .error { color: red; }
         
+        /* Botones rápidos */
         .quick-buttons { display: flex; justify-content: space-between; margin-bottom: 10px; }
         .quick-btn { width: 23%; padding: 8px 0; font-size: 0.9em; background-color: #e9ecef; color: #333; border: 1px solid #ccc; border-radius: 4px; cursor: pointer; text-align: center; }
         .quick-btn:hover { background-color: #dcdcdc; }
 
-        .checkbox-group {
-            display: flex;
-            align-items: center;
-            padding: 10px 0;
-            border-top: 1px solid #eee;
-            margin-top: 20px;
-        }
-        .checkbox-group input[type="checkbox"] {
-            width: 20px;
-            height: 20px;
-            margin-right: 10px;
-        }
-        .checkbox-group label {
-            margin-bottom: 0;
-            font-weight: bold;
-            flex-grow: 1;
+        /* Checkbox */
+        .checkbox-group { display: flex; align-items: center; padding: 10px 0; border-top: 1px solid #eee; margin-top: 20px; }
+        .checkbox-group input[type="checkbox"] { width: 20px; height: 20px; margin-right: 10px; }
+        .checkbox-group label { margin-bottom: 0; font-weight: bold; flex-grow: 1; }
+
+        /* --- CSS NUEVO (Botón NFC) --- */
+        .uid-container { position: relative; }
+        #scanNFC {
+            position: absolute;
+            top: 29px; 
+            right: 5px;
+            padding: 5px 8px;
+            font-size: 0.8em;
+            background-color: #6c757d;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            display: none; /* Oculto por defecto */
         }
     </style>
 </head>
@@ -100,14 +67,16 @@
             <li><a href="asignar.html">Asignar Pizzas</a></li>
             <li><a href="vender.html" class="active">Registrar Venta</a></li>
             <li><a href="reporte.html">Ver Reporte</a></li>
-            <li><a href="devolver.html">Registrar Devolución</a></li> </ul>
+            <li><a href="devolver.html">Registrar Devolución</a></li>
+        </ul>
     </nav>
     <div id="form-container">
         <h2>Registrar Venta de Pizzas</h2>
         <form id="ventaForm">
-            <div class="form-group">
+            <div class="form-group uid-container">
                 <label for="uid">UID del Vendedor (Pasa la tarjeta)</label>
                 <input type="text" id="uid" name="uid" required autofocus>
+                <button type="button" id="scanNFC">Escanear NFC</button>
             </div>
             
             <div class="form-group">
@@ -150,16 +119,43 @@
                 pizzaInput.value = button.dataset.value;
             });
         });
+
+        // --- SCRIPT NUEVO (Web NFC) ---
+        const scanBtn = document.getElementById('scanNFC');
+
+        if ('NDEFReader' in window) {
+            scanBtn.style.display = 'block'; // Muestra el botón
+
+            scanBtn.addEventListener('click', async () => {
+                resultadoDiv.innerHTML = 'Acerca la tarjeta NFC al teléfono...';
+                resultadoDiv.className = '';
+                
+                try {
+                    const ndef = new NDEFReader();
+                    await ndef.scan(); // Inicia el escaneo
+
+                    ndef.onreading = (event) => {
+                        const serialNumber = event.serialNumber;
+                        const uid = serialNumber.replace(/:/g, '').toUpperCase();
+                        
+                        uidInput.value = uid; // Pone el UID en el campo
+                        resultadoDiv.innerHTML = `<p class="exito">¡Tarjeta ${uid} leída!</p>`;
+                        pizzaInput.focus(); // Mueve el cursor al campo de pizzas
+                    };
+                } catch (error) {
+                    resultadoDiv.innerHTML = `<p class="error">Error de NFC: ${error.message}</p>`;
+                }
+            });
+        }
+        // --- Fin Script Nuevo ---
         
-        // Script de envío de formulario (MODIFICADO)
+        // Script de envío de formulario (YA CORREGIDO)
         form.addEventListener('submit', async (event) => {
             event.preventDefault();
             resultadoDiv.innerHTML = 'Calculando y registrando...';
             
             const formData = new FormData(event.target);
-            
             const entregoPago = formData.get('entregoPago') ?? 'NO';
-
             const data = {
                 uid: formData.get('uid').toUpperCase(),
                 pizzasVendidas: formData.get('pizzasVendidas'),
@@ -167,15 +163,12 @@
             };
             
             try {
-                // --- CAMBIO AQUÍ ---
-                // Se quitó 'http://localhost:3000'
+                // Ruta relativa (funciona en Render)
                 const response = await fetch('/registrar-venta', {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
                     body: JSON.stringify(data)
                 });
-                // --- FIN DEL CAMBIO ---
-
                 const result = await response.json();
                 if (response.ok) {
                     resultadoDiv.innerHTML = `<p class="exito">${result.message}</p>`;

@@ -66,11 +66,29 @@
         .form-group { margin-bottom: 15px; }
         .form-group label { display: block; margin-bottom: 5px; font-weight: bold; }
         .form-group input { width: 100%; padding: 10px; font-size: 1em; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
-        button { width: 100%; padding: 12px; font-size: 1.1em; background-color: #28a745; color: white; border: none; border-radius: 4px; cursor: pointer; }
+        button[type="submit"] { width: 100%; padding: 12px; font-size: 1.1em; background-color: #28a745; color: white; border: none; border-radius: 4px; cursor: pointer; }
         button:hover { background-color: #218838; }
         #resultado { margin-top: 20px; text-align: center; font-size: 1.1em; }
         .exito { color: green; }
         .error { color: red; }
+
+        /* --- CSS NUEVO (Botón NFC) --- */
+        .uid-container { 
+            position: relative; 
+        }
+        #scanNFC {
+            position: absolute;
+            top: 29px; /* Ajusta la posición vertical */
+            right: 5px; /* Ajusta la posición horizontal */
+            padding: 5px 8px;
+            font-size: 0.8em;
+            background-color: #6c757d;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            display: none; /* Oculto por defecto */
+        }
     </style>
 </head>
 <body>
@@ -81,16 +99,19 @@
             <li><a href="asignar.html">Asignar Pizzas</a></li>
             <li><a href="vender.html">Registrar Venta</a></li>
             <li><a href="reporte.html">Ver Reporte</a></li>
-            <li><a href="devolver.html">Registrar Devolución</a></li> </ul>
+            <li><a href="devolver.html">Registrar Devolución</a></li> 
+        </ul>
     </nav>
     <div id="form-container">
         <h2>Alta de Vendedor</h2>
         
         <form id="registroForm">
-            <div class="form-group">
+            <div class="form-group uid-container">
                 <label for="uid">UID (Tarjeta RFID)</label>
-                <input type="text" id="uid" name="uid" required>
+                <input type="text" id="uid" name="uid" required autofocus> 
+                <button type="button" id="scanNFC">Escanear NFC</button>
             </div>
+            
             <div class="form-group">
                 <label for="nombre">Nombre Completo</label>
                 <input type="text" id="nombre" name="nombre" required>
@@ -122,7 +143,51 @@
     <script>
         const form = document.getElementById('registroForm');
         const resultadoDiv = document.getElementById('resultado');
+        // --- Selectores Nuevos ---
+        const uidInput = document.getElementById('uid');
+        const nombreInput = document.getElementById('nombre'); // Campo "Nombre"
 
+        // --- SCRIPT NUEVO: AUTO-SALTO CON LECTOR USB ---
+        uidInput.addEventListener('keypress', function(event) {
+            // Revisa si la tecla presionada fue "Enter"
+            if (event.key === 'Enter' || event.keyCode === 13) {
+                event.preventDefault(); // Evita que el formulario se envíe
+                nombreInput.focus(); // Salta al campo "Nombre"
+            }
+        });
+
+        // --- SCRIPT NUEVO (Web NFC) ---
+        const scanBtn = document.getElementById('scanNFC');
+
+        // Revisa si el navegador es compatible con Web NFC (Android/Chrome)
+        if ('NDEFReader' in window) {
+            scanBtn.style.display = 'block'; // Muestra el botón
+
+            scanBtn.addEventListener('click', async () => {
+                resultadoDiv.innerHTML = 'Acerca la tarjeta NFC al teléfono...';
+                resultadoDiv.className = '';
+                
+                try {
+                    const ndef = new NDEFReader();
+                    await ndef.scan(); // Inicia el escaneo
+
+                    ndef.onreading = (event) => {
+                        const serialNumber = event.serialNumber;
+                        // Formato: "0a:1b:2c:3d" -> "0A1B2C3D"
+                        const uid = serialNumber.replace(/:/g, '').toUpperCase();
+                        
+                        uidInput.value = uid; // Pone el UID en el campo
+                        resultadoDiv.innerHTML = `<p class="exito">¡Tarjeta ${uid} leída!</p>`;
+                        nombreInput.focus(); // Mueve el cursor al campo "Nombre"
+                    };
+                } catch (error) {
+                    resultadoDiv.innerHTML = `<p class="error">Error de NFC: ${error.message}</p>`;
+                }
+            });
+        }
+        // --- Fin Script Nuevo ---
+
+        // Script de envío de formulario (YA ESTABA CORREGIDO)
         form.addEventListener('submit', async (event) => {
             event.preventDefault();
             resultadoDiv.innerHTML = 'Registrando...';
@@ -138,8 +203,7 @@
             };
 
             try {
-                // --- CAMBIO AQUÍ ---
-                // Se quitó 'http://localhost:3000'
+                // Ruta relativa (funciona en Render)
                 const response = await fetch('/registrar-vendedor', {
                     method: 'POST',
                     headers: {
@@ -147,7 +211,6 @@
                     },
                     body: JSON.stringify(data)
                 });
-                // --- FIN DEL CAMBIO ---
 
                 const result = await response.json();
 
@@ -160,7 +223,7 @@
 
             } catch (error) {
                 console.error('Error en fetch:', error);
-                resultadoDiv.innerHTML = `<p class="error">No se pudo conectar al servidor. ¿Está corriendo?</p>`;
+                resultadoDiv.innerHTML = `<p class="error">No se pudo conectar al servidor.</p>`;
             }
         });
     </script>

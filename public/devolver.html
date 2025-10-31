@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Registrar Devolución</title>
     <style>
+        /* --- ESTILOS DEL MENÚ --- */
         body { font-family: Arial, sans-serif; background: #f0f2f5; display: grid; place-items: center; min-height: 90vh; margin: 0; padding-top: 80px; }
         .main-nav { width: 100%; background-color: #333; padding: 15px 0; position: fixed; top: 0; left: 0; z-index: 100; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
         .main-nav ul { display: flex; justify-content: center; list-style: none; margin: 0; padding: 0; }
@@ -13,6 +14,7 @@
         .main-nav a:hover { background-color: #555; }
         .main-nav a.active { background-color: #007bff; }
         
+        /* --- ESTILOS DEL FORMULARIO --- */
         #form-container { width: 400px; padding: 30px; background: #fff; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); margin-top: 20px; }
         h2 { text-align: center; color: #333; }
         .form-group { margin-bottom: 15px; }
@@ -26,6 +28,22 @@
         .quick-buttons { display: flex; justify-content: space-between; margin-bottom: 10px; }
         .quick-btn { width: 23%; padding: 8px 0; font-size: 0.9em; background-color: #e9ecef; color: #333; border: 1px solid #ccc; border-radius: 4px; cursor: pointer; text-align: center; }
         .quick-btn:hover { background-color: #dcdcdc; }
+
+        /* --- CSS NUEVO (Botón NFC) --- */
+        .uid-container { position: relative; }
+        #scanNFC {
+            position: absolute;
+            top: 29px; 
+            right: 5px;
+            padding: 5px 8px;
+            font-size: 0.8em;
+            background-color: #6c757d;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            display: none; /* Oculto por defecto */
+        }
     </style>
 </head>
 <body>
@@ -43,9 +61,10 @@
     <div id="form-container">
         <h2>Registrar Devolución</h2>
         <form id="devolucionForm">
-            <div class="form-group">
+            <div class="form-group uid-container">
                 <label for="uid">UID del Vendedor (Pasa la tarjeta)</label>
                 <input type="text" id="uid" name="uid" required autofocus>
+                <button type="button" id="scanNFC">Escanear NFC</button>
             </div>
             
             <div class="form-group">
@@ -65,9 +84,6 @@
     </div>
 
     <script>
-        // --- CAMBIO AQUÍ ---
-        // Se borró la variable API_URL
-    
         const form = document.getElementById('devolucionForm');
         const resultadoDiv = document.getElementById('resultado');
         const uidInput = document.getElementById('uid');
@@ -87,8 +103,37 @@
                 pizzaInput.value = button.dataset.value;
             });
         });
+
+        // --- SCRIPT NUEVO (Web NFC) ---
+        const scanBtn = document.getElementById('scanNFC');
+
+        if ('NDEFReader' in window) {
+            scanBtn.style.display = 'block'; // Muestra el botón
+
+            scanBtn.addEventListener('click', async () => {
+                resultadoDiv.innerHTML = 'Acerca la tarjeta NFC al teléfono...';
+                resultadoDiv.className = '';
+                
+                try {
+                    const ndef = new NDEFReader();
+                    await ndef.scan(); // Inicia el escaneo
+
+                    ndef.onreading = (event) => {
+                        const serialNumber = event.serialNumber;
+                        const uid = serialNumber.replace(/:/g, '').toUpperCase();
+                        
+                        uidInput.value = uid; // Pone el UID en el campo
+                        resultadoDiv.innerHTML = `<p class="exito">¡Tarjeta ${uid} leída!</p>`;
+                        pizzaInput.focus(); // Mueve el cursor al campo de pizzas
+                    };
+                } catch (error) {
+                    resultadoDiv.innerHTML = `<p class="error">Error de NFC: ${error.message}</p>`;
+                }
+            });
+        }
+        // --- Fin Script Nuevo ---
         
-        // Script de envío de formulario
+        // Script de envío de formulario (YA CORREGIDO)
         form.addEventListener('submit', async (event) => {
             event.preventDefault();
             resultadoDiv.innerHTML = 'Registrando...';
@@ -100,15 +145,12 @@
             };
             
             try {
-                // --- CAMBIO AQUÍ ---
-                // Se usa una ruta relativa (empieza con /)
-                const response = await fetch(`/registrar-devolucion`, {
+                // Ruta relativa (funciona en Render)
+                const response = await fetch('/registrar-devolucion', {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
                     body: JSON.stringify(data)
                 });
-                // --- FIN DEL CAMBIO ---
-
                 const result = await response.json();
                 if (response.ok) {
                     resultadoDiv.innerHTML = `<p class="exito">${result.message}</p>`;
