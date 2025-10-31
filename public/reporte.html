@@ -63,9 +63,7 @@
             <li><a href="index.html">Registrar Vendedor</a></li>
             <li><a href="asignar.html">Asignar Pizzas</a></li>
             <li><a href="vender.html">Registrar Venta</a></li>
-            <li><a href="reporte.html">Ver Reporte</a></li>
-            <li><a href="devolver.html" class="active">Registrar Devolución</a></li>
-        </ul>
+            <li><a href="reporte.html" class="active">Ver Reporte</a></li> <li><a href="devolver.html">Registrar Devolución</a></li> </ul>
     </nav>
 
     <div id="form-container">
@@ -119,8 +117,8 @@
     </div>
     
     <script>
-        // !! CAMBIA ESTO por tu URL de Render si ya la tienes !!
-        const API_URL = 'http://localhost:3000'; // O 'https://tu-app.onrender.com'
+        // --- CAMBIO AQUÍ ---
+        // Se borró la variable API_URL
         
         const form = document.getElementById('reporteForm');
         const mensajeDiv = document.getElementById('mensaje');
@@ -159,7 +157,11 @@
             currentUID = uid; 
 
             try {
-                const response = await fetch(`${API_URL}/generar-reporte?uid=${uid}`);
+                // --- CAMBIO AQUÍ ---
+                // Se usa una ruta relativa (empieza con /)
+                const response = await fetch(`/generar-reporte?uid=${uid}`);
+                // --- FIN DEL CAMBIO ---
+                
                 const data = await response.json();
 
                 if (response.ok) {
@@ -167,9 +169,7 @@
                     document.getElementById('reporte-nombre').innerText = data.nombre;
                     document.getElementById('reporte-pizzas').innerText = data.totalPizzasAsignadas;
                     
-                    // ==== ESTA ES LA LÍNEA QUE FALTABA ====
                     document.getElementById('reporte-vendidas').innerText = data.totalPizzasVendidas;
-                    // =====================================
                     
                     document.getElementById('reporte-pagado').innerText = `$${data.totalVentaPagada}`;
                     document.getElementById('reporte-pendiente').innerText = `$${data.totalVentaPendiente}`;
@@ -195,7 +195,6 @@
             uidInput.focus();
         });
         
-        // (El resto de tu script de pago y firma)
         pagarBtn.addEventListener('click', () => {
             if (currentMontoPendiente <= 0) {
                 alert('No hay comisión pendiente para pagar.');
@@ -204,19 +203,27 @@
             modal.style.display = 'flex'; 
             resizeCanvas(); 
         });
+
         closeBtn.addEventListener('click', () => { modal.style.display = 'none'; signaturePad.clear(); });
         clearBtn.addEventListener('click', () => { signaturePad.clear(); });
+
         saveBtn.addEventListener('click', async () => {
             if (signaturePad.isEmpty()) {
                 alert("Por favor, el vendedor debe firmar.");
                 return;
             }
+
             const firmaBase64 = signaturePad.toDataURL('image/png');
+
             mensajeDiv.innerHTML = 'Registrando pago...';
             pagarBtn.style.display = 'none'; 
             modal.style.display = 'none'; 
+
             try {
-                const response = await fetch(`${API_URL}/pagar-comision`, {
+                // --- CAMBIO AQUÍ ---
+                // Se usa una ruta relativa (empieza con /)
+                const response = await fetch(`/pagar-comision`, {
+                // --- FIN DEL CAMBIO ---
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
                     body: JSON.stringify({
@@ -226,7 +233,9 @@
                         firmaBase64: firmaBase64 
                     })
                 });
+
                 const result = await response.json();
+
                 if (response.ok) {
                     mensajeDiv.innerHTML = `<p class="exito">¡Pago registrado con éxito!</p>`;
                     signaturePad.clear();
@@ -236,6 +245,7 @@
                     mensajeDiv.innerHTML = `<p class="error">${result.error}</p>`;
                     pagarBtn.style.display = 'block';
                 }
+
             } catch (error) {
                 mensajeDiv.innerHTML = `<p class="error">Error de conexión al pagar.</p>`;
                 pagarBtn.style.display = 'block';

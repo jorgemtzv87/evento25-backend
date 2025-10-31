@@ -81,8 +81,7 @@
             <li><a href="asignar.html">Asignar Pizzas</a></li>
             <li><a href="vender.html">Registrar Venta</a></li>
             <li><a href="reporte.html">Ver Reporte</a></li>
-            <li><a href="devolver.html" class="active">Registrar Devolución</a></li>
-        </ul>
+            <li><a href="devolver.html">Registrar Devolución</a></li> </ul>
     </nav>
     <div id="form-container">
         <h2>Alta de Vendedor</h2>
@@ -125,17 +124,12 @@
         const resultadoDiv = document.getElementById('resultado');
 
         form.addEventListener('submit', async (event) => {
-            // 1. Evita que la página se recargue
             event.preventDefault();
-
-            // 2. Muestra un mensaje de "cargando"
             resultadoDiv.innerHTML = 'Registrando...';
             resultadoDiv.className = '';
-
-            // 3. Obtiene los datos del formulario
             const formData = new FormData(event.target);
             const data = {
-                uid: formData.get('uid').toUpperCase(), // Convertimos UID a mayúsculas
+                uid: formData.get('uid').toUpperCase(),
                 nombre: formData.get('nombre'),
                 ife: formData.get('ife'),
                 telefono: formData.get('telefono'),
@@ -144,24 +138,24 @@
             };
 
             try {
-                // 4. Envía los datos al backend (al nuevo endpoint)
-                const response = await fetch('http://localhost:3000/registrar-vendedor', {
+                // --- CAMBIO AQUÍ ---
+                // Se quitó 'http://localhost:3000'
+                const response = await fetch('/registrar-vendedor', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
                     },
                     body: JSON.stringify(data)
                 });
+                // --- FIN DEL CAMBIO ---
 
                 const result = await response.json();
 
                 if (response.status === 201) {
-                    // Éxito
                     resultadoDiv.innerHTML = `<p class="exito">${result.message}</p>`;
-                    form.reset(); // Limpia el formulario
+                    form.reset();
                 } else {
-                    // Error (ej. UID duplicado o campos faltantes)
-                    resultadoDiv.innerHTML = `<p class="error">Error: ${result.error}</p>`;
+                    resultadoDiv.innerHTML = `<p class="error">${result.error}</p>`;
                 }
 
             } catch (error) {
