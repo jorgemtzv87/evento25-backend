@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registro de Vendedores</title>
+    <style>
+        /* --- ESTILOS DEL MENÚ (AÑADIDO) --- */
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding-top: 80px; /* Deja espacio para el menú fijo */
+        }
+
+        .main-nav {
+            width: 100%;
+            background-color: #333;
+            padding: 15px 0;
+            position: fixed; /* Fija el menú arriba */
+            top: 0;
+            left: 0;
+            z-index: 100;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+        .main-nav ul {
+            display: flex;
+            justify-content: center;
+            list-style: none;
+            margin: 0;
+            padding: 0;
+        }
+        .main-nav li {
+            margin: 0 10px; /* Espacio entre botones */
+        }
+        .main-nav a {
+            color: white;
+            text-decoration: none;
+            font-weight: bold;
+            font-size: 0.9em;
+            padding: 8px 12px;
+            border-radius: 4px;
+            transition: background-color 0.3s;
+        }
+        .main-nav a:hover {
+            background-color: #555;
+        }
+        
+        /* Marca la página actual en el menú */
+        .main-nav a.active {
+            background-color: #007bff;
+        }
+        
+        /* --- Estilos del Formulario (Ajustados) --- */
+        #form-container {
+            width: 500px;
+            padding: 30px;
+            background: #fff;
+            border-radius: 8px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            margin: 20px auto; /* Centra el formulario */
+        }
+        
+        /* --- (Resto de tus estilos originales) --- */
+        h2 { text-align: center; }
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; margin-bottom: 5px; font-weight: bold; }
+        .form-group input { width: 100%; padding: 10px; font-size: 1em; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
+        button { width: 100%; padding: 12px; font-size: 1.1em; background-color: #28a745; color: white; border: none; border-radius: 4px; cursor: pointer; }
+        button:hover { background-color: #218838; }
+        #resultado { margin-top: 20px; text-align: center; font-size: 1.1em; }
+        .exito { color: green; }
+        .error { color: red; }
+    </style>
+</head>
+<body>
+
+    <nav class="main-nav">
+        <ul>
+            <li><a href="index.html" class="active">Registrar Vendedor</a></li>
+            <li><a href="asignar.html">Asignar Pizzas</a></li>
+            <li><a href="vender.html">Registrar Venta</a></li>
+            <li><a href="reporte.html">Ver Reporte</a></li>
+            <li><a href="devolver.html" class="active">Registrar Devolución</a></li>
+        </ul>
+    </nav>
+    <div id="form-container">
+        <h2>Alta de Vendedor</h2>
+        
+        <form id="registroForm">
+            <div class="form-group">
+                <label for="uid">UID (Tarjeta RFID)</label>
+                <input type="text" id="uid" name="uid" required>
+            </div>
+            <div class="form-group">
+                <label for="nombre">Nombre Completo</label>
+                <input type="text" id="nombre" name="nombre" required>
+            </div>
+            <div class="form-group">
+                <label for="ife"># IFE (o INE)</label>
+                <input type="text" id="ife" name="ife" required>
+            </div>
+            <div class="form-group">
+                <label for="telefono">Teléfono</label>
+                <input type="tel" id="telefono" name="telefono">
+            </div>
+            <div class="form-group">
+                <label for="lider">Líder</label>
+                <input type="text" id="lider" name="lider">
+            </div>
+            <div class="form-group">
+                <label for="comision">Comisión de Venta (%)</label>
+                <input type="number" id="comision" name="comision" step="0.1" min="0">
+            </div>
+            
+            <button type="submit">Registrar Vendedor</button>
+        </form>
+        
+        <div id="resultado">
+            </div>
+    </div>
+
+    <script>
+        const form = document.getElementById('registroForm');
+        const resultadoDiv = document.getElementById('resultado');
+
+        form.addEventListener('submit', async (event) => {
+            // 1. Evita que la página se recargue
+            event.preventDefault();
+
+            // 2. Muestra un mensaje de "cargando"
+            resultadoDiv.innerHTML = 'Registrando...';
+            resultadoDiv.className = '';
+
+            // 3. Obtiene los datos del formulario
+            const formData = new FormData(event.target);
+            const data = {
+                uid: formData.get('uid').toUpperCase(), // Convertimos UID a mayúsculas
+                nombre: formData.get('nombre'),
+                ife: formData.get('ife'),
+                telefono: formData.get('telefono'),
+                lider: formData.get('lider'),
+                comision: formData.get('comision')
+            };
+
+            try {
+                // 4. Envía los datos al backend (al nuevo endpoint)
+                const response = await fetch('http://localhost:3000/registrar-vendedor', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(data)
+                });
+
+                const result = await response.json();
+
+                if (response.status === 201) {
+                    // Éxito
+                    resultadoDiv.innerHTML = `<p class="exito">${result.message}</p>`;
+                    form.reset(); // Limpia el formulario
+                } else {
+                    // Error (ej. UID duplicado o campos faltantes)
+                    resultadoDiv.innerHTML = `<p class="error">Error: ${result.error}</p>`;
+                }
+
+            } catch (error) {
+                console.error('Error en fetch:', error);
+                resultadoDiv.innerHTML = `<p class="error">No se pudo conectar al servidor. ¿Está corriendo?</p>`;
+            }
+        });
+    </script>
+
+</body>
+</html>

@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reporte de Vendedor</title>
+    
+    <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.0.0/dist/signature_pad.umd.min.js"></script>
+    
+    <style>
+        /* Estilos del Menú */
+        body {
+            font-family: Arial, sans-serif;
+            background: #f0f2f5;
+            display: grid;
+            place-items: center;
+            padding-top: 20px;
+            margin: 0;
+            padding-top: 80px;
+        }
+        .main-nav { width: 100%; background-color: #333; padding: 15px 0; position: fixed; top: 0; left: 0; z-index: 100; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
+        .main-nav ul { display: flex; justify-content: center; list-style: none; margin: 0; padding: 0; }
+        .main-nav li { margin: 0 10px; }
+        .main-nav a { color: white; text-decoration: none; font-weight: bold; font-size: 0.9em; padding: 8px 12px; border-radius: 4px; transition: background-color 0.3s; }
+        .main-nav a:hover { background-color: #555; }
+        .main-nav a.active { background-color: #007bff; }
+        
+        /* Estilos del Formulario */
+        #form-container { width: 450px; padding: 30px; background: #fff; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); margin-top: 20px; }
+        h2 { text-align: center; color: #333; }
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; margin-bottom: 5px; font-weight: bold; }
+        .form-group input { width: 100%; padding: 10px; font-size: 1.1em; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
+        button[type="submit"] { width: 100%; padding: 12px; font-size: 1.1em; background-color: #17a2b8; color: white; border: none; border-radius: 4px; cursor: pointer; }
+        #pagarComisionBtn { width: 100%; padding: 12px; font-size: 1.1em; background-color: #28a745; color: white; border: none; border-radius: 4px; cursor: pointer; margin-top: 15px; display: none; }
+        
+        /* Estilos del Reporte */
+        #mensaje { margin-top: 20px; text-align: center; font-size: 1.1em; }
+        .exito { color: green; } .error { color: red; }
+        #reporte-container { display: none; border-top: 2px solid #eee; margin-top: 25px; padding-top: 20px; }
+        #reporte-container h3 { text-align: center; margin-top: 0; color: #007bff; }
+        .reporte-linea { display: flex; justify-content: space-between; font-size: 1.2em; padding: 10px 0; border-bottom: 1px solid #f0f0f0; }
+        .reporte-linea span { font-weight: bold; }
+        .comision-desglose { background-color: #f8f9fa; padding: 10px; border-radius: 5px; margin-top: 10px; }
+        .total-comision { font-size: 1.5em; font-weight: bold; color: #28a745; text-align: center; margin-top: 20px; padding-top: 15px; border-top: 2px solid #000; }
+
+        /* Estilos del Modal */
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.6); display: none; justify-content: center; align-items: center; z-index: 1000; }
+        .modal-content { background: #fff; padding: 20px; border-radius: 8px; width: 90%; max-width: 500px; box-shadow: 0 5px 15px rgba(0,0,0,0.3); }
+        #signature-pad-container { border: 2px dashed #ccc; border-radius: 5px; position: relative; }
+        #signature-pad { width: 100%; height: 200px; }
+        .modal-buttons { display: flex; justify-content: space-between; margin-top: 15px; }
+        .modal-buttons button { width: 48%; padding: 10px; font-size: 1em; border-radius: 4px; cursor: pointer; }
+        #clear-signature { background-color: #ffc107; border: none; }
+        #save-signature { background-color: #28a745; border: none; color: white; }
+        #close-modal { background-color: #dc3545; border: none; color: white; }
+    </style>
+</head>
+<body>
+
+    <nav class="main-nav">
+        <ul>
+            <li><a href="index.html">Registrar Vendedor</a></li>
+            <li><a href="asignar.html">Asignar Pizzas</a></li>
+            <li><a href="vender.html">Registrar Venta</a></li>
+            <li><a href="reporte.html">Ver Reporte</a></li>
+            <li><a href="devolver.html" class="active">Registrar Devolución</a></li>
+        </ul>
+    </nav>
+
+    <div id="form-container">
+        <h2>Reporte de Vendedor</h2>
+        <form id="reporteForm">
+            <div class="form-group">
+                <label for="uid">Escanear Tarjeta del Vendedor</label>
+                <input type="text" id="uid" name="uid" required autofocus>
+            </div>
+            <button type="submit">Generar Reporte</button>
+        </form>
+        <div id="mensaje"></div>
+        
+        <div id="reporte-container">
+            <h3 id="reporte-nombre"></h3>
+            
+            <div class="reporte-linea">Pizzas Asignadas: <span id="reporte-pizzas">0</span></div>
+            
+            <div class="reporte-linea">Pizzas Vendidas: <span id="reporte-vendidas" style="color: #007bff;">0</span></div>
+            <div class="reporte-linea">Dinero ya Pagado: <span id="reporte-pagado" style="color: green;">$0.00</span></div>
+            <div class="reporte-linea">Dinero Pendiente (Debe): <span id="reporte-pendiente" style="color: red;">$0.00</span></div>
+            
+            <div class="comision-desglose">
+                <div class="reporte-linea">Comisión Total Ganada: <span id="reporte-comision-ganada">$0.00</span></div>
+                <div class="reporte-linea">Comisión Ya Pagada: <span id="reporte-comision-pagada" style="color: red;">-$0.00</span></div>
+            </div>
+            
+            <div class="total-comision">
+                Comisión Pendiente de Pago:
+                <div id="reporte-comision-pendiente">$0.00</div>
+            </div>
+            <button type="button" id="pagarComisionBtn">Pagar Comisión Pendiente</button>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="signature-modal">
+        <div class="modal-content">
+            <h4>Confirmación de Pago</h4>
+            <p>Por favor, firma en el recuadro para confirmar el recibo de tu comisión.</p>
+            <div id="signature-pad-container">
+                <canvas id="signature-pad"></canvas>
+            </div>
+            <div class="modal-buttons">
+                <button type="button" id="clear-signature">Limpiar</button>
+                <button type="button" id="save-signature">Guardar Pago</button>
+            </div>
+            <div class="modal-buttons" style="margin-top: 10px;">
+                <button type="button" id="close-modal" style="width: 100%;">Cancelar</button>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // !! CAMBIA ESTO por tu URL de Render si ya la tienes !!
+        const API_URL = 'http://localhost:3000'; // O 'https://tu-app.onrender.com'
+        
+        const form = document.getElementById('reporteForm');
+        const mensajeDiv = document.getElementById('mensaje');
+        const resultsDiv = document.getElementById('reporte-container');
+        const uidInput = document.getElementById('uid');
+        const pagarBtn = document.getElementById('pagarComisionBtn');
+        const modal = document.getElementById('signature-modal');
+        const canvas = document.getElementById('signature-pad');
+        const clearBtn = document.getElementById('clear-signature');
+        const saveBtn = document.getElementById('save-signature');
+        const closeBtn = document.getElementById('close-modal');
+        
+        const signaturePad = new SignaturePad(canvas, { backgroundColor: 'rgb(255, 255, 255)' });
+        
+        let currentUID = '';
+        let currentNombre = '';
+        let currentMontoPendiente = 0;
+
+        function resizeCanvas() {
+            const ratio =  Math.max(window.devicePixelRatio || 1, 1);
+            canvas.width = canvas.offsetWidth * ratio;
+            canvas.height = canvas.offsetHeight * ratio;
+            canvas.getContext("2d").scale(ratio, ratio);
+            signaturePad.clear(); 
+        }
+        window.addEventListener("resize", resizeCanvas);
+        
+        form.addEventListener('submit', async (event) => {
+            event.preventDefault(); 
+            mensajeDiv.innerHTML = 'Buscando...';
+            mensajeDiv.className = '';
+            resultsDiv.style.display = 'none'; 
+            pagarBtn.style.display = 'none';   
+            
+            const uid = uidInput.value.toUpperCase();
+            currentUID = uid; 
+
+            try {
+                const response = await fetch(`${API_URL}/generar-reporte?uid=${uid}`);
+                const data = await response.json();
+
+                if (response.ok) {
+                    mensajeDiv.innerHTML = ''; 
+                    document.getElementById('reporte-nombre').innerText = data.nombre;
+                    document.getElementById('reporte-pizzas').innerText = data.totalPizzasAsignadas;
+                    
+                    // ==== ESTA ES LA LÍNEA QUE FALTABA ====
+                    document.getElementById('reporte-vendidas').innerText = data.totalPizzasVendidas;
+                    // =====================================
+                    
+                    document.getElementById('reporte-pagado').innerText = `$${data.totalVentaPagada}`;
+                    document.getElementById('reporte-pendiente').innerText = `$${data.totalVentaPendiente}`;
+                    document.getElementById('reporte-comision-ganada').innerText = `$${data.totalComisionesGanadas}`;
+                    document.getElementById('reporte-comision-pagada').innerText = `-$${data.totalComisionesPagadas}`;
+                    document.getElementById('reporte-comision-pendiente').innerText = `$${data.comisionPendienteAPagar}`;
+
+                    currentNombre = data.nombre;
+                    currentMontoPendiente = parseFloat(data.comisionPendienteAPagar);
+                    resultsDiv.style.display = 'block';
+
+                    if (currentMontoPendiente > 0) {
+                        pagarBtn.style.display = 'block';
+                    }
+                } else {
+                    mensajeDiv.innerHTML = `<p class="error">${data.error}</p>`;
+                }
+            } catch (error) {
+                mensajeDiv.innerHTML = `<p class="error">Error de conexión.</p>`;
+            }
+            
+            uidInput.value = '';
+            uidInput.focus();
+        });
+        
+        // (El resto de tu script de pago y firma)
+        pagarBtn.addEventListener('click', () => {
+            if (currentMontoPendiente <= 0) {
+                alert('No hay comisión pendiente para pagar.');
+                return;
+            }
+            modal.style.display = 'flex'; 
+            resizeCanvas(); 
+        });
+        closeBtn.addEventListener('click', () => { modal.style.display = 'none'; signaturePad.clear(); });
+        clearBtn.addEventListener('click', () => { signaturePad.clear(); });
+        saveBtn.addEventListener('click', async () => {
+            if (signaturePad.isEmpty()) {
+                alert("Por favor, el vendedor debe firmar.");
+                return;
+            }
+            const firmaBase64 = signaturePad.toDataURL('image/png');
+            mensajeDiv.innerHTML = 'Registrando pago...';
+            pagarBtn.style.display = 'none'; 
+            modal.style.display = 'none'; 
+            try {
+                const response = await fetch(`${API_URL}/pagar-comision`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        uid: currentUID,
+                        montoPagado: currentMontoPendiente,
+                        nombre: currentNombre,
+                        firmaBase64: firmaBase64 
+                    })
+                });
+                const result = await response.json();
+                if (response.ok) {
+                    mensajeDiv.innerHTML = `<p class="exito">¡Pago registrado con éxito!</p>`;
+                    signaturePad.clear();
+                    uidInput.value = currentUID; 
+                    form.dispatchEvent(new Event('submit'));
+                } else {
+                    mensajeDiv.innerHTML = `<p class="error">${result.error}</p>`;
+                    pagarBtn.style.display = 'block';
+                }
+            } catch (error) {
+                mensajeDiv.innerHTML = `<p class="error">Error de conexión al pagar.</p>`;
+                pagarBtn.style.display = 'block';
+            }
+        });
+
+    </script>
+</body>
+</html>
