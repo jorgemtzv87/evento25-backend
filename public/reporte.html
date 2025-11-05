@@ -97,7 +97,19 @@
         </div>
     </div>
 
-    <div class="modal-overlay" id="signature-modal"> ... </div>
+    <div class="modal-overlay" id="signature-modal"> 
+        <div class="modal-content">
+            <h4>Firma de conformidad del vendedor</h4>
+            <div id="signature-pad-container">
+                <canvas id="signature-pad"></canvas>
+            </div>
+            <div class="modal-buttons">
+                <button id="close-modal">Cancelar</button>
+                <button id="clear-signature">Limpiar</button>
+                <button id="save-signature">Guardar y Pagar</button>
+            </div>
+        </div>
+    </div>
     
     <script>
         // Selectores del DOM
@@ -119,10 +131,16 @@
         let currentNombre = '';
         let currentMontoPendiente = 0;
 
-        function resizeCanvas() { /* ... (función sin cambios) ... */ }
+        function resizeCanvas() { 
+            const ratio =  Math.max(window.devicePixelRatio || 1, 1);
+            canvas.width = canvas.offsetWidth * ratio;
+            canvas.height = canvas.offsetHeight * ratio;
+            canvas.getContext("2d").scale(ratio, ratio);
+            signaturePad.clear(); 
+        }
         window.addEventListener("resize", resizeCanvas);
         
-        // --- SCRIPT NUEVO (Web NFC) ---
+        // --- SCRIPT (Web NFC) ---
         const scanBtn = document.getElementById('scanNFC');
 
         if ('NDEFReader' in window) {
@@ -151,9 +169,9 @@
                 }
             });
         }
-        // --- Fin Script Nuevo ---
+        // --- Fin Script ---
 
-        // FUNCIÓN PARA BUSCAR EL REPORTE (Sin cambios, pero ahora se llama por submit)
+        // FUNCIÓN PARA BUSCAR EL REPORTE
         form.addEventListener('submit', async (event) => {
             event.preventDefault(); 
             mensajeDiv.innerHTML = 'Buscando...';
@@ -162,7 +180,14 @@
             pagarBtn.style.display = 'none';   
             
             const uid = uidInput.value.toUpperCase(); // Toma el UID (puesto por NFC o manual)
-            currentUID = uid; 
+            
+            // Si el UID está vacío, no hacemos nada.
+            if (!uid) {
+                mensajeDiv.innerHTML = `<p class="error">Se requiere un UID.</p>`;
+                return; // Detenemos la ejecución
+            }
+            
+            currentUID = uid; // Solo guardamos el UID si no está vacío
 
             try {
                 const response = await fetch(`/generar-reporte?uid=${uid}`); // Ruta relativa
@@ -185,22 +210,83 @@
                     if (currentMontoPendiente > 0) {
                         pagarBtn.style.display = 'block';
                     }
+
+                    // --- CORRECCIÓN ANTERIOR (¡Sigue siendo correcta!) ---
+                    // Solo borramos el campo y hacemos focus SI EL REPORTE FUE EXITOSO
+                    uidInput.value = '';
+                    uidInput.focus();
+                    // --- FIN DE LA CORRECCIÓN ---
+
                 } else {
                     mensajeDiv.innerHTML = `<p class="error">${data.error}</p>`;
+                    // NO borramos el input si hay error, para que el usuario vea qué falló
                 }
             } catch (error) {
                 mensajeDiv.innerHTML = `<p class="error">Error de conexión.</p>`;
+                 // NO borramos el input si hay error
             }
-            
-            uidInput.value = '';
-            uidInput.focus();
         });
         
-        // (Script del Modal de Firma... sin cambios, ya usa rutas relativas)
-        pagarBtn.addEventListener('click', () => { /* ... */ });
-        closeBtn.addEventListener('click', () => { /* ... */ });
-        clearBtn.addEventListener('click', () => { /* ... */ });
-        saveBtn.addEventListener('click', async () => { /* ... */ });
+        // (Script del Modal de Firma... sin cambios)
+        pagarBtn.addEventListener('click', () => {
+            modal.style.display = 'flex';
+            resizeCanvas();
+            signaturePad.clear();
+        });
+        closeBtn.addEventListener('click', () => {
+            modal.style.display = 'none';
+        });
+        clearBtn.addEventListener('click', () => {
+            signaturePad.clear();
+        });
+        saveBtn.addEventListener('click', async () => {
+            if (signaturePad.isEmpty()) {
+                alert("Por favor, pida al vendedor que firme.");
+                return;
+            }
+
+            const signatureDataURL = signaturePad.toDataURL('image/png');
+            saveBtn.disabled = true;
+            saveBtn.innerText = 'Procesando...';
+
+            try {
+                const response = await fetch('/pagar-comision', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        uid: currentUID,
+                        nombre: currentNombre,
+                        montoPagado: currentMontoPendiente,
+                        firma: signatureDataURL
+                    })
+                });
+                const data = await response.json();
+
+                if (response.ok) {
+                    mensajeDiv.innerHTML = `<p class="exito">${data.mensaje}</p>`;
+                    modal.style.display = 'none';
+                    resultsDiv.style.display = 'none';
+                    pagarBtn.style.display = 'none';
+                    
+                    // --- ¡AQUÍ ESTÁ LA NUEVA CORRECCIÓN! ---
+                    // Antes de disparar el submit, ponemos el UID de nuevo en el campo
+                    // para que la búsqueda de refresco funcione.
+                    uidInput.value = currentUID; 
+                    // --- FIN DE LA NUEVA CORRECCIÓN ---
+
+                    // Disparamos el 'submit' de nuevo para refrescar el reporte
+                    form.dispatchEvent(new Event('submit')); 
+                } else {
+                    alert(`Error: ${data.error}`);
+                }
+
+            } catch (error) {
+                alert('Error de conexión al guardar la firma.');
+            }
+
+            saveBtn.disabled = false;
+            saveBtn.innerText = 'Guardar y Pagar';
+        });
 
     </script>
 </body>
