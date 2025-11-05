@@ -247,6 +247,7 @@
         clearBtn.addEventListener('click', () => {
             signaturePad.clear();
         });
+        
         saveBtn.addEventListener('click', async () => {
             if (signaturePad.isEmpty()) {
                 alert("Por favor, pida al vendedor que firme.");
@@ -276,11 +277,11 @@
                     resultsDiv.style.display = 'none';
                     pagarBtn.style.display = 'none';
                     
-                    // --- ¡AQUÍ ESTÁ LA NUEVA CORRECCIÓN! ---
+                    // --- ¡AQUÍ ESTÁ LA CORRECCIÓN! ---
                     // Antes de disparar el submit, ponemos el UID de nuevo en el campo
                     // para que la búsqueda de refresco funcione.
                     uidInput.value = currentUID; 
-                    // --- FIN DE LA NUEVA CORRECCIÓN ---
+                    // --- FIN DE LA CORRECCIÓN ---
 
                     // Disparamos el 'submit' de nuevo para refrescar el reporte
                     form.dispatchEvent(new Event('submit')); 
