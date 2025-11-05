@@ -81,6 +81,8 @@
         <div id="resultado"></div>
     </div>
     
+    <script src="utils.js"></script>
+
     <script>
         const form = document.getElementById('asignarForm');
         const resultadoDiv = document.getElementById('resultado');
@@ -117,17 +119,22 @@
                     const ndef = new NDEFReader();
                     await ndef.scan(); // Inicia el escaneo
 
-                    // Cuando se lee una tarjeta
+                    // --- PASO 2: USAR LA FUNCIÓN DE TRADUCCIÓN ---
                     ndef.onreading = (event) => {
-                        const serialNumber = event.serialNumber;
-                        // Formato: "0a:1b:2c:3d" -> "0A1B2C3D"
-                        const uid = serialNumber.replace(/:/g, '').toUpperCase();
+                        const serialNumber = event.serialNumber; // Ej: "12:8f:80:05"
+                        const uidHexDirecto = serialNumber.replace(/:/g, '').toUpperCase(); // "128F8005"
+
+                        // ¡AQUÍ ESTÁ LA TRADUCCIÓN!
+                        const uidFormatoUSB = convertirUid(uidHexDirecto); // "0092311314"
                         
-                        uidInput.value = uid; // Pone el UID en el campo
-                        resultadoDiv.innerHTML = `<p class="exito">¡Tarjeta ${uid} leída!</p>`;
+                        uidInput.value = uidFormatoUSB; // Pone el UID traducido
+                        resultadoDiv.innerHTML = `<p class="exito">¡Tarjeta ${uidFormatoUSB} leída!</p>`; // Muestra el UID traducido
                         pizzaInput.focus(); // Mueve el cursor al campo de pizzas
                     };
-                } catch (error) {
+                    // --- FIN DE LA MODIFICACIÓN ---
+
+                } catch (error)
+                    {
                     resultadoDiv.innerHTML = `<p class="error">Error de NFC: ${error.message}</p>`;
                 }
             });
@@ -140,7 +147,7 @@
             resultadoDiv.innerHTML = 'Procesando...';
             const formData = new FormData(event.target);
             const data = {
-                uid: formData.get('uid').toUpperCase(),
+                uid: formData.get('uid').toUpperCase(), // UID ya viene en formato USB
                 pizzasAsignadas: formData.get('pizzasAsignadas')
             };
             try {

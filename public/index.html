@@ -140,6 +140,8 @@
             </div>
     </div>
 
+    <script src="utils.js"></script>
+
     <script>
         const form = document.getElementById('registroForm');
         const resultadoDiv = document.getElementById('resultado');
@@ -171,15 +173,20 @@
                     const ndef = new NDEFReader();
                     await ndef.scan(); // Inicia el escaneo
 
+                    // --- PASO 2: USAR LA FUNCIÓN DE TRADUCCIÓN ---
                     ndef.onreading = (event) => {
-                        const serialNumber = event.serialNumber;
-                        // Formato: "0a:1b:2c:3d" -> "0A1B2C3D"
-                        const uid = serialNumber.replace(/:/g, '').toUpperCase();
+                        const serialNumber = event.serialNumber; // Ej: "12:8f:80:05"
+                        const uidHexDirecto = serialNumber.replace(/:/g, '').toUpperCase(); // "128F8005"
                         
-                        uidInput.value = uid; // Pone el UID en el campo
-                        resultadoDiv.innerHTML = `<p class="exito">¡Tarjeta ${uid} leída!</p>`;
+                        // ¡AQUÍ ESTÁ LA TRADUCCIÓN!
+                        const uidFormatoUSB = convertirUid(uidHexDirecto); // "0092311314"
+
+                        uidInput.value = uidFormatoUSB; // Pone el UID traducido
+                        resultadoDiv.innerHTML = `<p class="exito">¡Tarjeta ${uidFormatoUSB} leída!</p>`; // Muestra el UID traducido
                         nombreInput.focus(); // Mueve el cursor al campo "Nombre"
                     };
+                    // --- FIN DE LA MODIFICACIÓN ---
+
                 } catch (error) {
                     resultadoDiv.innerHTML = `<p class="error">Error de NFC: ${error.message}</p>`;
                 }
@@ -194,7 +201,7 @@
             resultadoDiv.className = '';
             const formData = new FormData(event.target);
             const data = {
-                uid: formData.get('uid').toUpperCase(),
+                uid: formData.get('uid').toUpperCase(), // UID ya viene en formato USB
                 nombre: formData.get('nombre'),
                 ife: formData.get('ife'),
                 telefono: formData.get('telefono'),

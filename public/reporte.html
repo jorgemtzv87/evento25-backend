@@ -111,6 +111,8 @@
         </div>
     </div>
     
+    <script src="utils.js"></script>
+
     <script>
         // Selectores del DOM
         const form = document.getElementById('reporteForm');
@@ -154,16 +156,22 @@
                     const ndef = new NDEFReader();
                     await ndef.scan();
 
+                    // --- PASO 2: USAR LA FUNCIÓN DE TRADUCCIÓN ---
                     ndef.onreading = (event) => {
-                        const serialNumber = event.serialNumber;
-                        const uid = serialNumber.replace(/:/g, '').toUpperCase();
+                        const serialNumber = event.serialNumber; // Ej: "12:8f:80:05"
+                        const uidHexDirecto = serialNumber.replace(/:/g, '').toUpperCase(); // "128F8005"
+
+                        // ¡AQUÍ ESTÁ LA TRADUCCIÓN!
+                        const uidFormatoUSB = convertirUid(uidHexDirecto); // "0092311314"
                         
-                        uidInput.value = uid; // Pone el UID en el campo
-                        mensajeDiv.innerHTML = `<p class="exito">¡Tarjeta ${uid} leída! Buscando...</p>`;
+                        uidInput.value = uidFormatoUSB; // Pone el UID traducido
+                        mensajeDiv.innerHTML = `<p class="exito">¡Tarjeta ${uidFormatoUSB} leída! Buscando...</p>`; // Muestra el UID traducido
                         
                         // ¡Dispara el formulario automáticamente!
                         form.dispatchEvent(new Event('submit'));
                     };
+                    // --- FIN DE LA MODIFICACIÓN ---
+
                 } catch (error) {
                     mensajeDiv.innerHTML = `<p class="error">Error de NFC: ${error.message}</p>`;
                 }
