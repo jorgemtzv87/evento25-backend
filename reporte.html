@@ -111,6 +111,8 @@
         </div>
     </div>
     
+    <script src="utils.js"></script>
+
     <script>
         // Selectores del DOM
         const form = document.getElementById('reporteForm');
@@ -140,7 +142,7 @@
         }
         window.addEventListener("resize", resizeCanvas);
         
-        // --- SCRIPT NUEVO (Web NFC) ---
+        // --- SCRIPT (Web NFC) ---
         const scanBtn = document.getElementById('scanNFC');
 
         if ('NDEFReader' in window) {
@@ -154,24 +156,30 @@
                     const ndef = new NDEFReader();
                     await ndef.scan();
 
+                    // --- PASO 2: USAR LA FUNCIÓN DE TRADUCCIÓN ---
                     ndef.onreading = (event) => {
-                        const serialNumber = event.serialNumber;
-                        const uid = serialNumber.replace(/:/g, '').toUpperCase();
+                        const serialNumber = event.serialNumber; // Ej: "12:8f:80:05"
+                        const uidHexDirecto = serialNumber.replace(/:/g, '').toUpperCase(); // "128F8005"
+
+                        // ¡AQUÍ ESTÁ LA TRADUCCIÓN!
+                        const uidFormatoUSB = convertirUid(uidHexDirecto); // "0092311314"
                         
-                        uidInput.value = uid; // Pone el UID en el campo
-                        mensajeDiv.innerHTML = `<p class="exito">¡Tarjeta ${uid} leída! Buscando...</p>`;
+                        uidInput.value = uidFormatoUSB; // Pone el UID traducido
+                        mensajeDiv.innerHTML = `<p class="exito">¡Tarjeta ${uidFormatoUSB} leída! Buscando...</p>`; // Muestra el UID traducido
                         
                         // ¡Dispara el formulario automáticamente!
                         form.dispatchEvent(new Event('submit'));
                     };
+                    // --- FIN DE LA MODIFICACIÓN ---
+
                 } catch (error) {
                     mensajeDiv.innerHTML = `<p class="error">Error de NFC: ${error.message}</p>`;
                 }
             });
         }
-        // --- Fin Script Nuevo ---
+        // --- Fin Script ---
 
-        // FUNCIÓN PARA BUSCAR EL REPORTE (Sin cambios, pero ahora se llama por submit)
+        // FUNCIÓN PARA BUSCAR EL REPORTE
         form.addEventListener('submit', async (event) => {
             event.preventDefault(); 
             mensajeDiv.innerHTML = 'Buscando...';
@@ -180,7 +188,14 @@
             pagarBtn.style.display = 'none';   
             
             const uid = uidInput.value.toUpperCase(); // Toma el UID (puesto por NFC o manual)
-            currentUID = uid; 
+            
+            // Si el UID está vacío, no hacemos nada.
+            if (!uid) {
+                mensajeDiv.innerHTML = `<p class="error">Se requiere un UID.</p>`;
+                return; // Detenemos la ejecución
+            }
+            
+            currentUID = uid; // Solo guardamos el UID si no está vacío
 
             try {
                 const response = await fetch(`/generar-reporte?uid=${uid}`); // Ruta relativa
@@ -204,7 +219,7 @@
                         pagarBtn.style.display = 'block';
                     }
 
-                    // --- INICIO DE LA CORRECCIÓN ---
+                    // --- CORRECCIÓN ANTERIOR (¡Sigue siendo correcta!) ---
                     // Solo borramos el campo y hacemos focus SI EL REPORTE FUE EXITOSO
                     uidInput.value = '';
                     uidInput.focus();
@@ -218,13 +233,9 @@
                 mensajeDiv.innerHTML = `<p class="error">Error de conexión.</p>`;
                  // NO borramos el input si hay error
             }
-            
-            // --- LÍNEAS ELIMINADAS DE AQUÍ ---
-            // uidInput.value = '';
-            // uidInput.focus();
         });
         
-        // (Script del Modal de Firma... sin cambios, ya usa rutas relativas)
+        // (Script del Modal de Firma... sin cambios)
         pagarBtn.addEventListener('click', () => {
             modal.style.display = 'flex';
             resizeCanvas();
@@ -236,6 +247,7 @@
         clearBtn.addEventListener('click', () => {
             signaturePad.clear();
         });
+        
         saveBtn.addEventListener('click', async () => {
             if (signaturePad.isEmpty()) {
                 alert("Por favor, pida al vendedor que firme.");
@@ -264,6 +276,13 @@
                     modal.style.display = 'none';
                     resultsDiv.style.display = 'none';
                     pagarBtn.style.display = 'none';
+                    
+                    // --- ¡AQUÍ ESTÁ LA CORRECCIÓN! ---
+                    // Antes de disparar el submit, ponemos el UID de nuevo en el campo
+                    // para que la búsqueda de refresco funcione.
+                    uidInput.value = currentUID; 
+                    // --- FIN DE LA CORRECCIÓN ---
+
                     // Disparamos el 'submit' de nuevo para refrescar el reporte
                     form.dispatchEvent(new Event('submit')); 
                 } else {
