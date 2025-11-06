@@ -141,7 +141,8 @@
             signaturePad.clear(); 
         }
         // --- ¡¡¡ LÍNEA ELIMINADA !!! ---
-        // window.addEventListener("resize", resizeCanvas); // Se eliminó esta línea
+        // Se eliminó la línea: window.addEventListener("resize", resizeCanvas);
+        // para evitar que la firma se borre en móviles.
         
         // --- SCRIPT (Web NFC) ---
         const scanBtn = document.getElementById('scanNFC');
@@ -155,7 +156,7 @@
                 
                 try {
                     const ndef = new NDEFReader();
-                    await ndef.scan(); // Corregido de ndf.scan() a ndef.scan()
+                    await ndef.scan(); // <-- Corregido el error tipográfico (era ndf)
 
                     // --- PASO 2: USAR LA FUNCIÓN DE TRADUCCIÓN ---
                     ndef.onreading = (event) => {
@@ -236,17 +237,26 @@
             }
         });
         
-        // (Script del Modal de Firma... con la corrección del setTimeout)
+        // --- ¡¡¡ CORRECCIÓN #2: SONDEO (Polling) !!! ---
         pagarBtn.addEventListener('click', () => {
             modal.style.display = 'flex';
             
-            // Retrasamos el re-dibujo para dar tiempo al navegador
-            // a renderizar el modal y que el canvas tenga un tamaño > 0
-            setTimeout(() => {
-                resizeCanvas();
-                // signaturePad.clear(); // resizeCanvas() ya incluye un clear()
-            }, 50); // 50ms es un retraso seguro
+            // En lugar de adivinar con setTimeout,
+            // sondeamos hasta que el canvas sea visible.
+            let attempts = 0;
+            const checkCanvasSize = setInterval(() => {
+                attempts++;
+                const canvasWidth = canvas.offsetWidth;
+                
+                // Si el canvas YA tiene un ancho (es visible) O si hemos intentado 20 veces (1 seg)
+                if (canvasWidth > 0 || attempts > 20) {
+                    clearInterval(checkCanvasSize); // Detener el sondeo
+                    resizeCanvas();                 // Redimensionar AHORA
+                }
+            }, 50); // Revisar cada 50ms
         });
+        // --- FIN DE LA CORRECCIÓN ---
+
 
         closeBtn.addEventListener('click', () => {
             modal.style.display = 'none';
