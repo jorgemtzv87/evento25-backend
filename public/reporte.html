@@ -140,7 +140,8 @@
             canvas.getContext("2d").scale(ratio, ratio);
             signaturePad.clear(); 
         }
-        window.addEventListener("resize", resizeCanvas);
+        // --- ¡¡¡ LÍNEA ELIMINADA !!! ---
+        // window.addEventListener("resize", resizeCanvas); // Se eliminó esta línea
         
         // --- SCRIPT (Web NFC) ---
         const scanBtn = document.getElementById('scanNFC');
@@ -154,7 +155,7 @@
                 
                 try {
                     const ndef = new NDEFReader();
-                    await ndf.scan();
+                    await ndef.scan(); // Corregido de ndf.scan() a ndef.scan()
 
                     // --- PASO 2: USAR LA FUNCIÓN DE TRADUCCIÓN ---
                     ndef.onreading = (event) => {
@@ -235,18 +236,17 @@
             }
         });
         
-        // --- ¡AQUÍ ESTÁ LA ÚLTIMA CORRECCIÓN! ---
+        // (Script del Modal de Firma... con la corrección del setTimeout)
         pagarBtn.addEventListener('click', () => {
             modal.style.display = 'flex';
             
-            // Retrasamos el re-dibujo 10ms para dar tiempo al navegador
+            // Retrasamos el re-dibujo para dar tiempo al navegador
             // a renderizar el modal y que el canvas tenga un tamaño > 0
             setTimeout(() => {
                 resizeCanvas();
-                signaturePad.clear();
-            }, 10); 
+                // signaturePad.clear(); // resizeCanvas() ya incluye un clear()
+            }, 50); // 50ms es un retraso seguro
         });
-        // --- FIN DE LA CORRECCIÓN ---
 
         closeBtn.addEventListener('click', () => {
             modal.style.display = 'none';
