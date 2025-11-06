@@ -4,9 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Reporte de Vendedor</title>
-    <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.0.0/dist/signature_pad.umd.min.js"></script>
     <style>
-        /* (Todos los estilos del menú, formulario, reporte y modal van aquí...) */
+        /* Estilos generales */
         body { font-family: Arial, sans-serif; background: #f0f2f5; display: grid; place-items: center; padding-top: 20px; margin: 0; padding-top: 80px; }
         .main-nav { width: 100%; background-color: #333; padding: 15px 0; position: fixed; top: 0; left: 0; z-index: 100; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
         .main-nav ul { display: flex; justify-content: center; list-style: none; margin: 0; padding: 0; }
@@ -14,32 +13,33 @@
         .main-nav a { color: white; text-decoration: none; font-weight: bold; font-size: 0.9em; padding: 8px 12px; border-radius: 4px; transition: background-color 0.3s; }
         .main-nav a:hover { background-color: #555; }
         .main-nav a.active { background-color: #007bff; }
+        
+        /* Contenedor del formulario */
         #form-container { width: 450px; padding: 30px; background: #fff; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); margin-top: 20px; }
         h2 { text-align: center; color: #333; }
         .form-group { margin-bottom: 15px; }
         .form-group label { display: block; margin-bottom: 5px; font-weight: bold; }
         .form-group input { width: 100%; padding: 10px; font-size: 1.1em; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
         button[type="submit"] { width: 100%; padding: 12px; font-size: 1.1em; background-color: #17a2b8; color: white; border: none; border-radius: 4px; cursor: pointer; }
+        
+        /* Botón Pagar */
         #pagarComisionBtn { width: 100%; padding: 12px; font-size: 1.1em; background-color: #28a745; color: white; border: none; border-radius: 4px; cursor: pointer; margin-top: 15px; display: none; }
+        
+        /* Mensajes */
         #mensaje { margin-top: 20px; text-align: center; font-size: 1.1em; }
         .exito { color: green; } .error { color: red; }
+        
+        /* Reporte */
         #reporte-container { display: none; border-top: 2px solid #eee; margin-top: 25px; padding-top: 20px; }
         #reporte-container h3 { text-align: center; margin-top: 0; color: #007bff; }
         .reporte-linea { display: flex; justify-content: space-between; font-size: 1.2em; padding: 10px 0; border-bottom: 1px solid #f0f0f0; }
         .reporte-linea span { font-weight: bold; }
         .comision-desglose { background-color: #f8f9fa; padding: 10px; border-radius: 5px; margin-top: 10px; }
         .total-comision { font-size: 1.5em; font-weight: bold; color: #28a745; text-align: center; margin-top: 20px; padding-top: 15px; border-top: 2px solid #000; }
-        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.6); display: none; justify-content: center; align-items: center; z-index: 1000; }
-        .modal-content { background: #fff; padding: 20px; border-radius: 8px; width: 90%; max-width: 500px; box-shadow: 0 5px 15px rgba(0,0,0,0.3); }
-        #signature-pad-container { border: 2px dashed #ccc; border-radius: 5px; position: relative; }
-        #signature-pad { width: 100%; height: 200px; }
-        .modal-buttons { display: flex; justify-content: space-between; margin-top: 15px; }
-        .modal-buttons button { width: 48%; padding: 10px; font-size: 1em; border-radius: 4px; cursor: pointer; }
-        #clear-signature { background-color: #ffc107; border: none; }
-        #save-signature { background-color: #28a745; border: none; color: white; }
-        #close-modal { background-color: #dc3545; border: none; color: white; }
         
-        /* --- CSS NUEVO (Botón NFC) --- */
+        /* CSS del Modal ELIMINADO */
+        
+        /* CSS Botón NFC */
         .uid-container { position: relative; }
         #scanNFC {
             position: absolute;
@@ -52,7 +52,7 @@
             border: none;
             border-radius: 4px;
             cursor: pointer;
-            display: none; /* Oculto por defecto */
+            display: none;
         }
     </style>
 </head>
@@ -81,7 +81,7 @@
         <div id="mensaje"></div>
         <div id="reporte-container">
             <h3 id="reporte-nombre"></h3>
-            <div class.reporte-linea">Pizzas Asignadas: <span id="reporte-pizzas">0</span></div>
+            <div class="reporte-linea">Pizzas Asignadas: <span id="reporte-pizzas">0</span></div>
             <div class="reporte-linea">Pizzas Vendidas: <span id="reporte-vendidas" style="color: #007bff;">0</span></div>
             <div class="reporte-linea">Dinero ya Pagado: <span id="reporte-pagado" style="color: green;">$0.00</span></div>
             <div class="reporte-linea">Dinero Pendiente (Debe): <span id="reporte-pendiente" style="color: red;">$0.00</span></div>
@@ -97,20 +97,6 @@
         </div>
     </div>
 
-    <div class="modal-overlay" id="signature-modal"> 
-        <div class="modal-content">
-            <h4>Firma de conformidad del vendedor</h4>
-            <div id="signature-pad-container">
-                <canvas id="signature-pad"></canvas>
-            </div>
-            <div class="modal-buttons">
-                <button id="close-modal">Cancelar</button>
-                <button id="clear-signature">Limpiar</button>
-                <button id="save-signature">Guardar y Pagar</button>
-            </div>
-        </div>
-    </div>
-    
     <script src="utils.js"></script>
 
     <script>
@@ -120,34 +106,23 @@
         const resultsDiv = document.getElementById('reporte-container');
         const uidInput = document.getElementById('uid');
         const pagarBtn = document.getElementById('pagarComisionBtn');
-        // (más selectores del modal...)
-        const modal = document.getElementById('signature-modal');
-        const canvas = document.getElementById('signature-pad');
-        const clearBtn = document.getElementById('clear-signature');
-        const saveBtn = document.getElementById('save-signature');
-        const closeBtn = document.getElementById('close-modal');
         
-        const signaturePad = new SignaturePad(canvas, { backgroundColor: 'rgb(255, 255, 255)' });
+        // Selectores del modal ELIMINADOS
+        
+        // Objeto signaturePad ELIMINADO
         
         let currentUID = '';
         let currentNombre = '';
         let currentMontoPendiente = 0;
 
-        function resizeCanvas() { 
-            const ratio =  Math.max(window.devicePixelRatio || 1, 1);
-            canvas.width = canvas.offsetWidth * ratio;
-            canvas.height = canvas.offsetHeight * ratio;
-            canvas.getContext("2d").scale(ratio, ratio);
-            signaturePad.clear(); 
-        }
-        // --- LÍNEA ELIMINADA ---
-        // window.addEventListener("resize", resizeCanvas); 
+        // Función resizeCanvas ELIMINADA
+        // Event listener de 'resize' ELIMINADO
         
         // --- SCRIPT (Web NFC) ---
         const scanBtn = document.getElementById('scanNFC');
 
         if ('NDEFReader' in window) {
-            scanBtn.style.display = 'block'; // Muestra el botón
+            scanBtn.style.display = 'block'; 
 
             scanBtn.addEventListener('click', async () => {
                 mensajeDiv.innerHTML = 'Acerca la tarjeta NFC al teléfono...';
@@ -157,21 +132,16 @@
                     const ndef = new NDEFReader();
                     await ndef.scan();
 
-                    // --- PASO 2: USAR LA FUNCIÓN DE TRADUCCIÓN ---
                     ndef.onreading = (event) => {
-                        const serialNumber = event.serialNumber; // Ej: "12:8f:80:05"
-                        const uidHexDirecto = serialNumber.replace(/:/g, '').toUpperCase(); // "128F8005"
-
-                        // ¡AQUÍ ESTÁ LA TRADUCCIÓN!
-                        const uidFormatoUSB = convertirUid(uidHexDirecto); // "0092311314"
+                        const serialNumber = event.serialNumber;
+                        const uidHexDirecto = serialNumber.replace(/:/g, '').toUpperCase();
+                        const uidFormatoUSB = convertirUid(uidHexDirecto); 
                         
-                        uidInput.value = uidFormatoUSB; // Pone el UID traducido
-                        mensajeDiv.innerHTML = `<p class="exito">¡Tarjeta ${uidFormatoUSB} leída! Buscando...</p>`; // Muestra el UID traducido
+                        uidInput.value = uidFormatoUSB; 
+                        mensajeDiv.innerHTML = `<p class="exito">¡Tarjeta ${uidFormatoUSB} leída! Buscando...</p>`; 
                         
-                        // ¡Dispara el formulario automáticamente!
                         form.dispatchEvent(new Event('submit'));
                     };
-                    // --- FIN DE LA MODIFICACIÓN ---
 
                 } catch (error) {
                     mensajeDiv.innerHTML = `<p class="error">Error de NFC: ${error.message}</p>`;
@@ -188,22 +158,20 @@
             resultsDiv.style.display = 'none'; 
             pagarBtn.style.display = 'none';   
             
-            const uid = uidInput.value.toUpperCase(); // Toma el UID (puesto por NFC o manual)
+            const uid = uidInput.value.toUpperCase(); 
             
-            // Si el UID está vacío, no hacemos nada.
             if (!uid) {
                 mensajeDiv.innerHTML = `<p class="error">Se requiere un UID.</p>`;
-                return; // Detenemos la ejecución
+                return; 
             }
             
-            currentUID = uid; // Solo guardamos el UID si no está vacío
+            currentUID = uid; 
 
             try {
-                const response = await fetch(`/generar-reporte?uid=${uid}`); // Ruta relativa
+                const response = await fetch(`/generar-reporte?uid=${uid}`);
                 const data = await response.json();
 
                 if (response.ok) {
-                    // (Lógica para llenar el reporte... sin cambios)
                     mensajeDiv.innerHTML = ''; 
                     document.getElementById('reporte-nombre').innerText = data.nombre;
                     document.getElementById('reporte-pizzas').innerText = data.totalPizzasAsignadas;
@@ -220,52 +188,27 @@
                         pagarBtn.style.display = 'block';
                     }
 
-                    // --- CORRECCIÓN ANTERIOR (¡Sigue siendo correcta!) ---
-                    // Solo borramos el campo y hacemos focus SI EL REPORTE FUE EXITOSO
                     uidInput.value = '';
                     uidInput.focus();
-                    // --- FIN DE LA CORRECCIÓN ---
 
                 } else {
                     mensajeDiv.innerHTML = `<p class="error">${data.error}</p>`;
-                    // NO borramos el input si hay error, para que el usuario vea qué falló
                 }
             } catch (error) {
                 mensajeDiv.innerHTML = `<p class="error">Error de conexión.</p>`;
-                 // NO borramos el input si hay error
             }
         });
         
-        // --- ¡¡¡ CORRECCIÓN DEFINITIVA (Delay Largo) !!! ---
-        pagarBtn.addEventListener('click', () => {
-            modal.style.display = 'flex';
+        // --- ¡¡¡ LÓGICA DE PAGO SIMPLIFICADA !!! ---
+        pagarBtn.addEventListener('click', async () => {
             
-            // Usamos un delay generoso de 300ms para ASEGURARNOS
-            // de que el modal esté 100% visible antes de
-            // redimensionar el canvas (lo cual lo borra).
-            setTimeout(() => {
-                resizeCanvas(); 
-            }, 300); // 300ms 
-        });
-        // --- FIN DE LA CORRECCIÓN ---
-
-
-        closeBtn.addEventListener('click', () => {
-            modal.style.display = 'none';
-        });
-        clearBtn.addEventListener('click', () => {
-            signaturePad.clear();
-        });
-        
-        saveBtn.addEventListener('click', async () => {
-            if (signaturePad.isEmpty()) {
-                alert("Por favor, pida al vendedor que firme.");
+            // Confirmación simple
+            if (!confirm(`¿Confirmas pagar $${currentMontoPendiente} a ${currentNombre}?`)) {
                 return;
             }
 
-            const signatureDataURL = signaturePad.toDataURL('image/png');
-            saveBtn.disabled = true;
-            saveBtn.innerText = 'Procesando...';
+            pagarBtn.disabled = true;
+            pagarBtn.innerText = 'Procesando...';
 
             try {
                 const response = await fetch('/pagar-comision', {
@@ -274,35 +217,33 @@
                     body: JSON.stringify({
                         uid: currentUID,
                         nombre: currentNombre,
-                        montoPagado: currentMontoPendiente,
-                        firma: signatureDataURL
+                        montoPagado: currentMontoPendiente
+                        // Ya no se envía el campo 'firma'
                     })
                 });
                 const data = await response.json();
 
                 if (response.ok) {
                     mensajeDiv.innerHTML = `<p class="exito">${data.mensaje}</p>`;
-                    modal.style.display = 'none';
                     resultsDiv.style.display = 'none';
                     pagarBtn.style.display = 'none';
                     
-                    // --- (Corrección anterior de refresco, ya estaba bien) ---
+                    // Refrescar el reporte
                     uidInput.value = currentUID; 
-                    // --- (Fin de la corrección anterior) ---
-
-                    // Disparamos el 'submit' de nuevo para refrescar el reporte
                     form.dispatchEvent(new Event('submit')); 
                 } else {
                     alert(`Error: ${data.error}`);
                 }
 
             } catch (error) {
-                alert('Error de conexión al guardar la firma.');
+                alert('Error de conexión al procesar el pago.');
             }
 
-            saveBtn.disabled = false;
-            saveBtn.innerText = 'Guardar y Pagar';
+            pagarBtn.disabled = false;
+            pagarBtn.innerText = 'Pagar Comisión Pendiente';
         });
+
+        // Listeners del modal ELIMINADOS
 
     </script>
 </body>
