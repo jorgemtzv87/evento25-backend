@@ -81,7 +81,7 @@
         <div id="mensaje"></div>
         <div id="reporte-container">
             <h3 id="reporte-nombre"></h3>
-            <div class="reporte-linea">Pizzas Asignadas: <span id="reporte-pizzas">0</span></div>
+            <div class.reporte-linea">Pizzas Asignadas: <span id="reporte-pizzas">0</span></div>
             <div class="reporte-linea">Pizzas Vendidas: <span id="reporte-vendidas" style="color: #007bff;">0</span></div>
             <div class="reporte-linea">Dinero ya Pagado: <span id="reporte-pagado" style="color: green;">$0.00</span></div>
             <div class="reporte-linea">Dinero Pendiente (Debe): <span id="reporte-pendiente" style="color: red;">$0.00</span></div>
@@ -140,9 +140,8 @@
             canvas.getContext("2d").scale(ratio, ratio);
             signaturePad.clear(); 
         }
-        // --- ¡¡¡ LÍNEA ELIMINADA !!! ---
-        // Se eliminó la línea: window.addEventListener("resize", resizeCanvas);
-        // para evitar que la firma se borre en móviles.
+        // --- LÍNEA ELIMINADA ---
+        // window.addEventListener("resize", resizeCanvas); 
         
         // --- SCRIPT (Web NFC) ---
         const scanBtn = document.getElementById('scanNFC');
@@ -156,7 +155,7 @@
                 
                 try {
                     const ndef = new NDEFReader();
-                    await ndef.scan(); // <-- Corregido el error tipográfico (era ndf)
+                    await ndef.scan();
 
                     // --- PASO 2: USAR LA FUNCIÓN DE TRADUCCIÓN ---
                     ndef.onreading = (event) => {
@@ -237,23 +236,16 @@
             }
         });
         
-        // --- ¡¡¡ CORRECCIÓN #2: SONDEO (Polling) !!! ---
+        // --- ¡¡¡ CORRECCIÓN DEFINITIVA (Delay Largo) !!! ---
         pagarBtn.addEventListener('click', () => {
             modal.style.display = 'flex';
             
-            // En lugar de adivinar con setTimeout,
-            // sondeamos hasta que el canvas sea visible.
-            let attempts = 0;
-            const checkCanvasSize = setInterval(() => {
-                attempts++;
-                const canvasWidth = canvas.offsetWidth;
-                
-                // Si el canvas YA tiene un ancho (es visible) O si hemos intentado 20 veces (1 seg)
-                if (canvasWidth > 0 || attempts > 20) {
-                    clearInterval(checkCanvasSize); // Detener el sondeo
-                    resizeCanvas();                 // Redimensionar AHORA
-                }
-            }, 50); // Revisar cada 50ms
+            // Usamos un delay generoso de 300ms para ASEGURARNOS
+            // de que el modal esté 100% visible antes de
+            // redimensionar el canvas (lo cual lo borra).
+            setTimeout(() => {
+                resizeCanvas(); 
+            }, 300); // 300ms 
         });
         // --- FIN DE LA CORRECCIÓN ---
 
