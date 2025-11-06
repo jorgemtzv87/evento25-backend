@@ -365,20 +365,21 @@ app.get('/generar-reporte', async (req, res) => {
     }
 });
 // ==========================================================
-// ENDPOINT 6: REGISTRAR PAGO DE COMISIÓN (Actualizado con Firma)
+// ENDPOINT 6: REGISTRAR PAGO DE COMISIÓN (SIMPLIFICADO)
 // ==========================================================
 app.post('/pagar-comision', async (req, res) => {
     try {
-        // CAMBIO 1: Recibimos la firma
-        const { uid, montoPagado, nombre, firmaBase64 } = req.body;
+        // CAMBIO 1: Ya no recibimos 'firmaBase64'
+        const { uid, montoPagado, nombre } = req.body;
         
         if (!uid || !montoPagado || !nombre) {
             return res.status(400).json({ success: false, error: 'Faltan datos (UID, Monto, Nombre)' });
         }
-        // Opcional: validar que la firma no venga vacía
-        if (!firmaBase64) {
-             return res.status(400).json({ success: false, error: 'Falta la firma' });
-        }
+        
+        // CAMBIO 2: Validación de la firma eliminada
+        // if (!firmaBase64) {
+        //     return res.status(400).json({ success: false, error: 'Falta la firma' });
+        // }
 
         await doc.loadInfo();
 
@@ -387,17 +388,17 @@ app.post('/pagar-comision', async (req, res) => {
             return res.status(500).json({ success: false, error: 'Hoja "Pagos_Comision" no encontrada' });
         }
 
-        // CAMBIO 2: Añadimos la firma al guardar
+        // CAMBIO 3: Añadimos la fila SIN la firma
         await sheetPagos.addRow({
             UID_Vendedor: uid,
             Nombre_Vendedor: nombre,
             Monto_Pagado: montoPagado,
-            Timestamp_Pago: new Date().toISOString(),
-            Firma_Base64: firmaBase64 // <-- ¡Añadido!
+            Timestamp_Pago: new Date().toISOString()
+            // Firma_Base64: firmaBase64 // <-- ¡Línea eliminada!
         });
 
-        console.log(`Pago de comisión registrado para ${nombre}: $${montoPagado}`);
-        return res.status(201).json({ success: true, message: 'Pago de comisión registrado' });
+        console.log(`Pago de comisión registrado para ${nombre}: $${montoPagado} (Sin firma)`);
+        return res.status(201).json({ success: true, message: 'Pago de comisión registrado (sin firma)' });
 
     } catch (error) {
         console.error('Error al pagar comisión:', error);
